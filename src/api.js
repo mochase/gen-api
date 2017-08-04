@@ -4,43 +4,41 @@ const once = new Once('api')
 const hash = require('object-hash')
 
 
-type Lang = 'zh-CN' | 'en'
-interface ApiResponse {
-}
+// type Lang = 'zh-CN' | 'en'
+// interface ApiResponse {
+// }
 export const ERR_NO_SESSION = 'no session'
-export interface ApiConfig {
-  url: string
-  method?: 'POST' | 'GET' | 'DELETE' | 'PUT'
-  options?: {
-    cached?: boolean | number
-    withCredentials?: boolean
-    responseSchema?: any
-    requestSchema?: any
-  }
-}
-interface ApiIns<I, O> {
-  (requestBody: I, token: string, lang: Lang): Promise<O>
-}
-interface ApiFactory {
-  <O>(conf: ApiConfig): ApiIns<null, O>
-  <I, O>(conf: ApiConfig): ApiIns<I, O>
-}
+// export interface ApiConfig {
+//   url: string
+//   method?: 'POST' | 'GET' | 'DELETE' | 'PUT'
+//   options?: {
+//     cached?: boolean | number
+//     withCredentials?: boolean
+//     responseSchema?: any
+//     requestSchema?: any
+//   }
+// }
+// interface ApiIns<I, O> {
+//   (requestBody: I, token: string, lang: Lang): Promise<O>
+// }
+// interface ApiFactory {
+//   <O>(conf: ApiConfig): ApiIns<null, O>
+//   <I, O>(conf: ApiConfig): ApiIns<I, O>
+// }
 
-export const genApi: ApiFactory = (conf: ApiConfig) => {
+export const genApi = (conf) => {
   let {url: apiUrl, method: apiMethod = 'GET', options = {}} = conf
   let {cached = false, withCredentials = false, responseSchema = null, requestSchema = null} = options
-  // return (token: string) => {
-  //
-  // }
-  let reqValidate: string | boolean = false
+  let reqValidate = false
+  // schema 校验
   if (requestSchema) {
     reqValidate = hash(requestSchema)
-    validator.addSchema(<string>reqValidate, requestSchema)
+    validator.addSchema(reqValidate, requestSchema)
   }
-  let respValidate: string | boolean = false
+  let respValidate = false
   if (responseSchema) {
     respValidate = hash(responseSchema)
-    validator.addSchema(<string>respValidate, responseSchema)
+    validator.addSchema(respValidate, responseSchema)
   }
   let api = {
     method: apiMethod.toUpperCase(),
@@ -50,7 +48,7 @@ export const genApi: ApiFactory = (conf: ApiConfig) => {
     reqValidate,
     respValidate
   }
-  return (requestBody = null, authorization: string = '', lang: Lang = 'zh-CN') => {
+  return (requestBody = null, authorization = '', lang = 'zh-CN') => {
     let {method = 'GET', url, withCredentials, reqValidate, respValidate} = api
     if (reqValidate) {
       let errors
@@ -64,12 +62,17 @@ export const genApi: ApiFactory = (conf: ApiConfig) => {
         if (DEBUG) {
           debugger
         }
+        // requestSchema 验证失败
         return Promise.reject(errors)
       }
     }
     let headers = new Headers()
     headers.set('Accept-Language', lang)
-    // headers.set('X-Request-With', 'gen-api')
+    /**
+     * 自定义header
+     * ...
+     * ...
+     */
     let body
 
     if (requestBody) {
@@ -86,8 +89,10 @@ export const genApi: ApiFactory = (conf: ApiConfig) => {
       }
     }
     let id = api.url + '||' + hash({
-        method: api.method, url: api.url,
-        requestBody, lang
+        method: api.method,
+        url: api.url,
+        requestBody,
+        lang
       })
 
     return once.do(id, async () => {
@@ -95,6 +100,8 @@ export const genApi: ApiFactory = (conf: ApiConfig) => {
         let isLogin = false
         try {
           if (authorization) {
+            // Auth2.0
+            // ???
             headers.set('Authorization', authorization)
             isLogin = true
           }
@@ -109,7 +116,7 @@ export const genApi: ApiFactory = (conf: ApiConfig) => {
           return
         }
 
-        let response: ApiResponse
+        let response
         let request = new Request(url, {
           method,
           headers,
