@@ -16,44 +16,40 @@ export const ERR_NO_SESSION = 'no session'
 //     withCredentials?: boolean
 //     responseSchema?: any
 //     requestSchema?: any
-//   }
-// }
-// interface ApiIns<I, O> {
-//   (requestBody: I, token: string, lang: Lang): Promise<O>
-// }
-// interface ApiFactory {
-//   <O>(conf: ApiConfig): ApiIns<null, O>
-//   <I, O>(conf: ApiConfig): ApiIns<I, O>
-// }
+
 
 export const genApi = (conf) => {
   let {url: apiUrl, method: apiMethod = 'GET', options = {}} = conf
   let {cached = false, withCredentials = false, responseSchema = null, requestSchema = null} = options
-  let reqValidate = false
-  // schema 校验
+
+  let reqSchemaId = ''
   if (requestSchema) {
-    reqValidate = hash(requestSchema)
-    validator.addSchema(reqValidate, requestSchema)
+    // jjv, 注册schema
+    reqSchemaId = hash(resquestSchema)
+    validator.addSchema(reqSchemaId, requestSchema)
+
   }
-  let respValidate = false
+  
+  let respSchemaId = ''
   if (responseSchema) {
-    respValidate = hash(responseSchema)
-    validator.addSchema(respValidate, responseSchema)
+    respSchemaId = hash(responseSchema)
+    validator.addSchema(respSchemaId, responseSchema)
   }
-  let api = {
+
+  let _config = {
     method: apiMethod.toUpperCase(),
     url: apiUrl,
     withCredentials,
     cached,
-    reqValidate,
-    respValidate
+    reqSchemaId,
+    respSchemaId
   }
   return (requestBody = null, authorization = '', lang = 'zh-CN') => {
-    let {method = 'GET', url, withCredentials, reqValidate, respValidate} = api
-    if (reqValidate) {
+    let {method, url, withCredentials, reqSchemaId, respSchemaId} = _config
+    if (reqSchemaId) {
       let errors
       try {
-        errors = validator.validate(reqValidate, requestBody)
+        errors = validator.validate(reqSchemaId, requestBody)
       } catch (err) {
         errors = err
       }
@@ -66,6 +62,7 @@ export const genApi = (conf) => {
         return Promise.reject(errors)
       }
     }
+
     let headers = new Headers()
     headers.set('Accept-Language', lang)
     /**
@@ -112,8 +109,7 @@ export const genApi = (conf) => {
 
         //  check login
         if (withCredentials && !isLogin) {
-          await Promise.reject(ERR_NO_SESSION)
-          return
+          return await Promise.reject(ERR_NO_SESSION)
         }
 
         let response
@@ -125,10 +121,10 @@ export const genApi = (conf) => {
         let resp = await fetch(request);
         response = await resp.json()
 
-        if (respValidate) {
+        if (respSchemaId) {
           let errors
           try {
-            errors = validator.validate(respValidate, response)
+            errors = validator.validate(respSchemaId, response)
           } catch (err) {
             errors = err
           }
@@ -137,8 +133,7 @@ export const genApi = (conf) => {
             if (DEBUG) {
               debugger
             }
-            await Promise.reject(errors)
-            return
+            return await Promise.reject(errors)
           }
         }
         return await Promise.resolve(response)
