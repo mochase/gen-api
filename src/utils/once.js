@@ -3,30 +3,27 @@ import {cloneDeep} from 'lodash'
 export const ERR_ID = 'id should be string'
 export const ERR_DATA_EXPIRED = 'data expired'
 
-interface OnceAction {
-  (...params): Promise<any>
-}
-interface OnceRecord {
-  id: string
-  expire: number
-  data: any
-}
-class OnceDb extends Dexie {
-  once: Dexie.Table<OnceRecord, string>
+// interface OnceAction {
+//   (...params): Promise<any>
+// }
+// interface OnceRecord {
+//   id: string
+//   expire: number
+//   data: any
+// }
+// class OnceDb extends Dexie {
+//   once: Dexie.Table<OnceRecord, string>
 
-  constructor(name: string) {
-    super(name)
-    this.version(1).stores({
-      once: '&id, *expire, data'
-    })
-  }
-}
+//   constructor(name: string) {
+//     super(name)
+//     this.version(1).stores({
+//       once: '&id, *expire, data'
+//     })
+//   }
+// }
 
 export class Once {
-  private $cache = new Map()
-  private db: OnceDb
-
-  constructor(name: string = 'once') {
+  constructor(name = 'once') {
     this.$cache = new Map()
     this.db = new OnceDb(name)
 
@@ -36,11 +33,11 @@ export class Once {
     }, 30 * 1000)
   }
 
-  async 'do'(id: string, action: OnceAction, cache: boolean | number) {
+  async 'do'(id, action, cache) {
     if (typeof id !== 'string') {
       return await Promise.reject(ERR_ID)
     }
-    let p: Promise<any> = this.$cache.get(id)
+    let p = this.$cache.get(id)
     if (p && p.then) {
       // cloneDeep 一份, 确保多个请求不会修改同一个对象
       try {
