@@ -25,7 +25,7 @@ module.exports = function makeWebpackConfig() {
    * Karma will set this when it's a test build
    */
   config.entry = {
-    main: './example/demo.ts'
+    main: './example/demo.js'
   };
 
   /**
@@ -63,13 +63,14 @@ module.exports = function makeWebpackConfig() {
   // Initialize module
   config.module = {
     rules: [
-      {
-        test: /\.tsx?$/,
-        use: [
-          {loader: 'ts-loader'}
-        ],
-        exclude: [/node_modules/]
-      },
+      { test: /\.js$/, 
+        exclude: /node_modules/, 
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['es2017']
+          }
+        }},
       {
         test: /\.yaml/,
         use: [

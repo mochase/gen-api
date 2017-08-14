@@ -5,8 +5,6 @@ const hash = require('object-hash')
 
 
 // type Lang = 'zh-CN' | 'en'
-// interface ApiResponse {
-// }
 export const ERR_NO_SESSION = 'no session'
 // export interface ApiConfig {
 //   url: string
@@ -25,7 +23,7 @@ export const genApi = (conf) => {
   let reqSchemaId = ''
   if (requestSchema) {
     // jjv, 注册schema
-    reqSchemaId = hash(resquestSchema)
+    reqSchemaId = hash(requestSchema)
     validator.addSchema(reqSchemaId, requestSchema)
 
   }
@@ -85,42 +83,44 @@ export const genApi = (conf) => {
           break
       }
     }
-    let id = api.url + '||' + hash({
-        method: api.method,
-        url: api.url,
-        requestBody,
-        lang
-      })
+    
+    let isLogin = false
+    try {
+      if (authorization) {
+        // Auth2.0
+        // ???
+        headers.set('Authorization', authorization)
+        isLogin = true
+      }
+    } catch (err) {
+      // nothing
+      isLogin = false
+    }
 
+    //  check login
+    if (withCredentials && !isLogin) {
+      return Promise.reject(ERR_NO_SESSION)
+    }
+
+    let response
+    let request = new Request(url, {
+      method,
+      headers,
+      body
+    })
+
+    let id = _config.url + '||' + hash({
+      method: _config.method,
+      url: _config.url,
+      requestBody,
+      lang
+    })
+    
     return once.do(id, async () => {
-      let ret = (async () => {
-        let isLogin = false
-        try {
-          if (authorization) {
-            // Auth2.0
-            // ???
-            headers.set('Authorization', authorization)
-            isLogin = true
-          }
-        } catch (err) {
-          // nothing
-          isLogin = false
-        }
-
-        //  check login
-        if (withCredentials && !isLogin) {
-          return await Promise.reject(ERR_NO_SESSION)
-        }
-
-        let response
-        let request = new Request(url, {
-          method,
-          headers,
-          body
-        })
+      try {
         let resp = await fetch(request);
         response = await resp.json()
-
+        console.info(response)
         if (respSchemaId) {
           let errors
           try {
@@ -137,14 +137,10 @@ export const genApi = (conf) => {
           }
         }
         return await Promise.resolve(response)
-      })()
-
-      ret.catch(err => {
-        // 通用异常处理
+      } catch (error) {
+        // 通常异常处理
         console.error(err)
-      })
-
-      return ret
+      }
     }, cached)
   }
 }
