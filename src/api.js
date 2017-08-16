@@ -27,23 +27,16 @@ export const genApi = (conf) => {
     validator.addSchema(reqSchemaId, requestSchema)
 
   }
-  
-  let respSchemaId = ''
-  if (responseSchema) {
-    respSchemaId = hash(responseSchema)
-    validator.addSchema(respSchemaId, responseSchema)
-  }
-
   let _config = {
     method: apiMethod.toUpperCase(),
     url: apiUrl,
     withCredentials,
     cached,
-    reqSchemaId,
-    respSchemaId
+    reqSchemaId
   }
+
   return (requestBody = null, authorization = '', lang = 'zh-CN') => {
-    let {method, url, withCredentials, reqSchemaId, respSchemaId} = _config
+    let {method, url, withCredentials, reqSchemaId} = _config
     if (reqSchemaId) {
       let errors
       try {
@@ -102,13 +95,6 @@ export const genApi = (conf) => {
       return Promise.reject(ERR_NO_SESSION)
     }
 
-    let response
-    let request = new Request(url, {
-      method,
-      headers,
-      body
-    })
-
     let id = _config.url + '||' + hash({
       method: _config.method,
       url: _config.url,
@@ -118,9 +104,19 @@ export const genApi = (conf) => {
     
     return once.do(id, async () => {
       try {
+        let request = new Request(url, {
+          method,
+          headers,
+          body
+        })    
         let resp = await fetch(request);
-        response = await resp.json()
-        console.info(response)
+        let response = await resp.json()
+
+        let respSchemaId = ''
+        if (responseSchema) {
+          respSchemaId = hash(responseSchema)
+          validator.addSchema(respSchemaId, responseSchema)
+        } 
         if (respSchemaId) {
           let errors
           try {
@@ -131,7 +127,7 @@ export const genApi = (conf) => {
           if (errors) {
             console.warn('response body invalid', apiUrl, errors, response)
             if (DEBUG) {
-              debugger
+              // debugger
             }
             return await Promise.reject(errors)
           }

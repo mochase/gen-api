@@ -29,23 +29,23 @@ getIpInfo(sameReq, authorization, lang)
   })
 
 // // 相同的请求只发送一次
-// getIpInfo(sameReq, authorization, lang)
-//   .then(data => {
-//     console.log('No.2 request', data)
-//   })
+getIpInfo(sameReq, authorization, lang)
+  .then(data => {
+    console.log('No.2 request', data)
+  })
 
 // 请求参数错误
 // getIpInfo({
 //   page: 0, per_page: 0
 // }, authorization, lang).catch(err => {
-//   console.debug('json validate', err)
+//   // console.debug('json validate', err)
 //   console.error(err)
 // })
 
-// setTimeout(() => {
-//   // 5 秒后查询，从缓存查询，不发送网络请求
-//   getIpInfo(sameReq, authorization, lang)
-//     .then(data => {
-//       console.log('No.3 request', data)
-//     })
-// }, 5000)
+setTimeout(() => {
+  // 5 秒后查询，从缓存查询，不发送网络请求
+  getIpInfo(sameReq, authorization, lang)
+    .then(data => {
+      console.log('No.3 request', data)
+    })
+}, 5000)
