@@ -23,12 +23,12 @@ export const authorization = ''
 export const lang = 'zh-CN'
 
 
-export const genApi = (conf) => {
+export const genApi = (config) => {
     let {
         url: apiUrl,
         method: apiMethod = 'GET',
         options = {}
-    } = conf
+    } = config
     let {
         cached = false, withCredentials = false, responseSchema = null, requestSchema = null
     } = options

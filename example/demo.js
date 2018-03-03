@@ -33,7 +33,7 @@ getIpInfo(sameReq)
         console.log('No.1 request:', data)
     })
 
-// // 相同的请求只发送一次
+// 相同的请求只发送一次
 getIpInfo(sameReq)
     .then(data => {
         console.log('No.2 request', data)
