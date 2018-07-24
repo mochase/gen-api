@@ -45,50 +45,7 @@ export const genApi = (config) => {
     }
 
     return (requestBody = null) => {
-        if (reqSchemaId) {
-            let errors
-            try {
-                errors = validator.validate(reqSchemaId, requestBody)
-            } catch (err) {
-                errors = err
-            }
-            if (errors) {
-                console.warn('request body invalid', apiUrl, errors, requestBody)
-                // requestSchema 验证失败
-                return Promise.reject(errors)
-            }
-        }
-
-        let headers = new Headers()
-        headers.set('Accept-Language', lang)
-        /**
-         * 自定义header
-         * ...
-         * ...
-         */
         let body, url = apiUrl
-        if (requestBody) {
-            switch (method) {
-                case 'GET':
-                    url += '?' + Object.keys(requestBody).map(k => {
-                        return k + '=' + requestBody[k]
-                    }).join('&')
-                    break
-                default:
-                    headers.set('Content-Type', 'application/json')
-                    body = JSON.stringify(requestBody)
-                    break
-            }
-        }
-
-        if (authorization) {
-            // set auth token
-            headers.set('Authorization', authorization)
-        }
-        if (withCredentials && !authorization) {
-            return Promise.reject(ERR_NO_SESSION)
-        }
-
         let id = url + '||' + hash({
             method,
             url,
@@ -97,6 +54,48 @@ export const genApi = (config) => {
         })
 
         const fn = async function () {
+            if (reqSchemaId) {
+                let errors
+                try {
+                    errors = validator.validate(reqSchemaId, requestBody)
+                } catch (err) {
+                    errors = err
+                }
+                if (errors) {
+                    console.warn('request body invalid', apiUrl, errors, requestBody)
+                    // requestSchema 验证失败
+                    return Promise.reject(errors)
+                }
+            }
+    
+            let headers = new Headers()
+            headers.set('Accept-Language', lang)
+            /**
+             * 自定义header
+             * ...
+             * ...
+             */
+            if (requestBody) {
+                switch (method) {
+                    case 'GET':
+                        url += '?' + Object.keys(requestBody).map(k => {
+                            return k + '=' + requestBody[k]
+                        }).join('&')
+                        break
+                    default:
+                        headers.set('Content-Type', 'application/json')
+                        body = JSON.stringify(requestBody)
+                        break
+                }
+            }
+    
+            if (authorization) {
+                // set auth token
+                headers.set('Authorization', authorization)
+            }
+            if (withCredentials && !authorization) {
+                return Promise.reject(ERR_NO_SESSION)
+            }
             let request = new Request(url, {
                 method,
                 headers,

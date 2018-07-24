@@ -25,6 +25,13 @@ getIpInfo(sameReq)
         console.log('No.1 request:', data)
     })
 
+// 请求参数错误
+getIpInfo({
+    page: 0, per_page: 0
+  }).then(data => {
+      console.log(data)
+  })
+
 // 相同的请求只发送一次
 setTimeout(() => {
     getIpInfo(sameReq)
@@ -32,10 +39,5 @@ setTimeout(() => {
             console.log('No.2 request', data)
         })
 }, 2000)
-// 请求参数错误
-getIpInfo({
-  page: 0, per_page: 0
-}).then(data => {
-    console.log(data)
-})
+
 
