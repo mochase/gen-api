@@ -1,7 +1,5 @@
 import Dexie from 'dexie'
-import {
-    cloneDeep
-} from 'lodash'
+import { cloneDeep } from 'lodash'
 export const ERR_ID = 'id should be string'
 export const ERR_DATA_EXPIRED = 'data expired'
 export const REPEATING_REQUEST = 'repeating request'
@@ -19,23 +17,17 @@ export class Once {
             item: '&id, *expire, data'
         })
         this.db = db
-        // this.cachePool = []
         this.cleanExpire()
     }
 
     async do(id, fn, cache) {
-        if (typeof id !== 'string') {
-            return Promise.reject(ERR_ID)
-        }
-        // if (this.cachePool.indexOf(id) > -1) {
-        //   return Promise.reject(REPEATING_REQUEST)
-        // }
-        // this.cachePool.push(id)
         try {
+            if (typeof id !== 'string') {
+                return Promise.reject(ERR_ID)
+            }
             // 不缓存
             if (!cache) {
-                // this.cachePool = this.cachePool.filter(v => {v !== id})
-                return fn()
+                return await fn()
             }
             // 清除过期缓存
             this.cleanExpire()
@@ -46,7 +38,7 @@ export class Once {
                 return Promise.resolve(cloneDeep(value.data))
             } else {
                 // 缓存未命中
-                let rsp = fn()
+                let rsp = await fn()
                 let expire
                 if (cache === true) {
                     expire = Date.now() + 24 * 60 * 60 * 1000
@@ -60,10 +52,10 @@ export class Once {
                 })
                 return Promise.resolve(cloneDeep(rsp))
             }
-
-        } catch (err) {
-            console.error(err)
+        } catch (e) {
+            return Promise.reject(e)
         }
+
     }
 
     async cleanExpire() {

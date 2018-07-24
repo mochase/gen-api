@@ -1,48 +1,45 @@
 # 更多其他的参数可以自行补充
-type: array
-items:
-  type: object
-  required: [id, type, created_at]
-  properties:
-    id:
-      type: string
-    created_at:
-      type: string
-      format: date-time
-    type:
-      type: string
-      enum:
-        - CommitCommentEvent
-        - CreateEvent
-        - DeleteEvent
-        - DeploymentEvent
-        - DeploymentStatusEvent
-        - DownloadEvent
-        - FollowEvent
-        - ForkEvent
-        - ForkApplyEvent
-        - GistEvent
-        - GollumEvent
-        - IssueCommentEvent
-        - IssuesEvent
-        - LabelEvent
-        - MemberEvent
-        - MembershipEvent
-        - MilestoneEvent
-        - OrganizationEvent
-        - OrgBlockEvent
-        - PageBuildEvent
-        - ProjectCardEvent
-        - ProjectColumnEvent
-        - ProjectEvent
-        - PublicEvent
-        - PullRequestEvent
-        - PullRequestReviewEvent
-        - PullRequestReviewCommentEvent
-        - PushEvent
-        - ReleaseEvent
-        - RepositoryEvent
-        - StatusEvent
-        - TeamEvent
-        - TeamAddEvent
-        - WatchEvent
+type: object
+properties:
+  id:
+    type: number
+  created_at:
+    type: string
+    format: date-time
+  type:
+    type: string
+    enum:
+      - CommitCommentEvent
+      - CreateEvent
+      - DeleteEvent
+      - DeploymentEvent
+      - DeploymentStatusEvent
+      - DownloadEvent
+      - FollowEvent
+      - ForkEvent
+      - ForkApplyEvent
+      - GistEvent
+      - GollumEvent
+      - IssueCommentEvent
+      - IssuesEvent
+      - LabelEvent
+      - MemberEvent
+      - MembershipEvent
+      - MilestoneEvent
+      - OrganizationEvent
+      - OrgBlockEvent
+      - PageBuildEvent
+      - ProjectCardEvent
+      - ProjectColumnEvent
+      - ProjectEvent
+      - PublicEvent
+      - PullRequestEvent
+      - PullRequestReviewEvent
+      - PullRequestReviewCommentEvent
+      - PushEvent
+      - ReleaseEvent
+      - RepositoryEvent
+      - StatusEvent
+      - TeamEvent
+      - TeamAddEvent
+      - WatchEvent

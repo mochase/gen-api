@@ -1,9 +1,5 @@
-import {
-    Once
-} from './utils/once'
-import {
-    validator
-} from './utils/validator'
+import { Once } from './utils/once'
+import { validator } from './utils/validator'
 const once = new Once('api')
 const hash = require('object-hash')
 
@@ -26,34 +22,29 @@ export const lang = 'zh-CN'
 export const genApi = (config) => {
     let {
         url: apiUrl,
-        method: apiMethod = 'GET',
-        options = {}
+        method = 'GET',
+        options: {
+            cached = false, 
+            withCredentials = false, 
+            responseSchema = null, 
+            requestSchema = null
+        }
     } = config
-    let {
-        cached = false, withCredentials = false, responseSchema = null, requestSchema = null
-    } = options
+    method = method.toUpperCase()
 
     let reqSchemaId = ''
     if (requestSchema) {
-        // jjv, 注册schema
         reqSchemaId = hash(requestSchema)
         validator.addSchema(reqSchemaId, requestSchema)
     }
-    let conf = {
-        method: apiMethod.toUpperCase(),
-        url: apiUrl,
-        withCredentials,
-        cached,
-        reqSchemaId
+
+    let respSchemaId = ''
+    if (responseSchema) {
+        respSchemaId = hash(responseSchema)
+        validator.addSchema(respSchemaId, responseSchema)
     }
 
     return (requestBody = null) => {
-        let {
-            method,
-            url,
-            withCredentials,
-            reqSchemaId
-        } = conf
         if (reqSchemaId) {
             let errors
             try {
@@ -75,8 +66,7 @@ export const genApi = (config) => {
          * ...
          * ...
          */
-        let body
-
+        let body, url = apiUrl
         if (requestBody) {
             switch (method) {
                 case 'GET':
@@ -91,57 +81,46 @@ export const genApi = (config) => {
             }
         }
 
-        let isLogin = false
         if (authorization) {
             // set auth token
             headers.set('Authorization', authorization)
-            isLogin = true
         }
-        //  check login
-        if (withCredentials && !isLogin) {
+        if (withCredentials && !authorization) {
             return Promise.reject(ERR_NO_SESSION)
         }
 
-        let id = conf.url + '||' + hash({
-            method: conf.method,
-            url: conf.url,
+        let id = url + '||' + hash({
+            method,
+            url,
             requestBody,
             lang
         })
 
-        const promise = once.do(id, async () => {
-            try {
-                let request = new Request(url, {
-                    method,
-                    headers,
-                    body
-                })
-                let resp = await fetch(request);
-                let response = await resp.json()
-
-                let respSchemaId = ''
-                if (responseSchema) {
-                    respSchemaId = hash(responseSchema)
-                    validator.addSchema(respSchemaId, responseSchema)
+        const fn = async function () {
+            let request = new Request(url, {
+                method,
+                headers,
+                body
+            })
+            let resp = await fetch(request);
+            let response = await resp.json()
+            if (respSchemaId) {
+                let errors
+                try {
+                    errors = validator.validate(respSchemaId, response)
+                } catch (err) {
+                    errors = err
                 }
-                if (respSchemaId) {
-                    let errors
-                    try {
-                        errors = validator.validate(respSchemaId, response)
-                    } catch (err) {
-                        errors = err
-                    }
-                    if (errors) {
-                        console.warn('response body invalid', apiUrl, errors, response)
-                        return Promise.reject(errors)
-                    }
+                if (errors) {
+                    console.warn('response body invalid', apiUrl, errors, response)
+                    return Promise.reject(errors)
                 }
-                return Promise.resolve(response)
-            } catch (error) {
-                // 通常异常处理
-                console.error(error)
             }
-        }, cached)
-        return promise
+            return Promise.resolve(response)
+        }
+
+        return once.do(id, fn, cached).catch(e => {
+            console.error(e)
+        })
     }
 }
